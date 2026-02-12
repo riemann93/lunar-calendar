@@ -8,6 +8,7 @@ import 'package:lunar_calendar/date_square.dart';
 Widget buildTestDateSquare({
   required int date,
   bool isSelected = false,
+  bool isToday = false,
   required ValueChanged<int> onDateSelected,
 }) {
   return MaterialApp(
@@ -18,6 +19,7 @@ Widget buildTestDateSquare({
         child: DateSquare(
           date: date,
           isSelected: isSelected,
+          isToday: isToday,
           onDateSelected: onDateSelected,
         ),
       ),
@@ -143,6 +145,80 @@ void main() {
         ),
       );
       expect(mouseRegion.cursor, SystemMouseCursors.click);
+    });
+
+    testWidgets('shows today border when isToday is true', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        isToday: true,
+        onDateSelected: (_) {},
+      ));
+
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byType(Container),
+        ),
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.border, isNotNull);
+      expect(
+        decoration.border,
+        Border.all(color: const Color(0xFFB89090), width: 2),
+      );
+    });
+
+    testWidgets('does not show border when isToday is false', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        onDateSelected: (_) {},
+      ));
+
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byType(Container),
+        ),
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.border, isNull);
+    });
+
+    testWidgets('shows today border combined with selected state',
+        (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        isSelected: true,
+        isToday: true,
+        onDateSelected: (_) {},
+      ));
+
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byType(Container),
+        ),
+      );
+      final decoration = container.decoration as BoxDecoration;
+      // Has both the selected fill color and the today border
+      expect(decoration.color, const Color(0xFFB89090));
+      expect(decoration.border, isNotNull);
+    });
+
+    testWidgets('semantics label includes today when isToday is true',
+        (tester) async {
+      // Enable the semantics tree for this test
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 7,
+        isToday: true,
+        onDateSelected: (_) {},
+      ));
+
+      expect(find.bySemanticsLabel(RegExp(r'Day 7.*today')), findsOneWidget);
+
+      handle.dispose();
     });
   });
 }

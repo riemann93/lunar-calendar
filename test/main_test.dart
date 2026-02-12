@@ -65,10 +65,11 @@ void main() {
       expect(find.text('13-Month Lunar Calendar'), findsOneWidget);
     });
 
-    testWidgets('renders the year', (tester) async {
+    testWidgets('renders the current year', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
-      expect(find.text('2024'), findsOneWidget);
+      final currentYear = DateTime.now().year.toString();
+      expect(find.text(currentYear), findsOneWidget);
     });
 
     testWidgets('renders Calendar View pill button', (tester) async {
@@ -102,6 +103,18 @@ void main() {
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       expect(scaffold.backgroundColor, const Color(0xFFE8D5D0));
+    });
+
+    testWidgets('exactly one MonthCard receives a todayDay value',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      final cards = tester.widgetList<MonthCard>(find.byType(MonthCard));
+      final cardsWithToday =
+          cards.where((card) => card.todayDay != null).toList();
+      expect(cardsWithToday.length, 1);
+      // The todayDay value should be between 1 and 28
+      expect(cardsWithToday.first.todayDay, inInclusiveRange(1, 28));
     });
   });
 }

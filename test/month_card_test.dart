@@ -4,13 +4,13 @@ import 'package:lunar_calendar/date_square.dart';
 import 'package:lunar_calendar/month_card.dart';
 
 /// Helper to pump a MonthCard inside a constrained layout.
-Widget buildTestMonthCard(String monthName) {
+Widget buildTestMonthCard(String monthName, {int? todayDay}) {
   return MaterialApp(
     home: Scaffold(
       body: SizedBox(
         width: 300,
         height: 400,
-        child: MonthCard(monthName: monthName),
+        child: MonthCard(monthName: monthName, todayDay: todayDay),
       ),
     ),
   );
@@ -106,6 +106,32 @@ void main() {
         tester.widget<DateSquare>(find.widgetWithText(DateSquare, '10')).isSelected,
         false,
       );
+    });
+
+    testWidgets('passes isToday to correct DateSquare when todayDay is provided',
+        (tester) async {
+      await tester.pumpWidget(buildTestMonthCard('January', todayDay: 14));
+
+      final ds14 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '14'),
+      );
+      expect(ds14.isToday, true);
+
+      // Other dates should not be today
+      final ds15 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '15'),
+      );
+      expect(ds15.isToday, false);
+    });
+
+    testWidgets('no DateSquare has isToday when todayDay is null',
+        (tester) async {
+      await tester.pumpWidget(buildTestMonthCard('January'));
+
+      final squares = tester.widgetList<DateSquare>(find.byType(DateSquare));
+      for (final sq in squares) {
+        expect(sq.isToday, false);
+      }
     });
   });
 }
