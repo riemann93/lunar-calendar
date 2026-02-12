@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'month_card.dart';
-// TODO: Create month_card.dart file in the same directory as main.dart
 
 void main() {
   runApp(const MyApp());
@@ -98,7 +97,6 @@ class CalendarHomePage extends StatelessWidget {
                   ),
                   itemCount: monthNames.length,
                   itemBuilder: (context, index) {
-                    // TODO: Replace with actual MonthCard widget once file is created
                     return MonthCard(monthName: monthNames[index]);
                   },
                 ),
@@ -112,20 +110,25 @@ class CalendarHomePage extends StatelessWidget {
 
   // Helper method to build the pill-shaped buttons
   Widget _buildPillButton(String label, {required bool isSelected}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? const Color(0xFFB89090) // Dusty rose when selected
-            : const Color(0xFFC9ADAD), // Lighter rose when not selected
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
+    return Semantics(
+      label: label,
+      button: true,
+      selected: isSelected,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFB89090) // Dusty rose when selected
+              : const Color(0xFFC9ADAD), // Lighter rose when not selected
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
     );

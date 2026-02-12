@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DateSquare extends StatefulWidget {
   final int date;
   final bool isSelected;
-  final Function(int) onDateSelected;
+  final ValueChanged<int> onDateSelected;
 
   const DateSquare({
     super.key,
@@ -36,34 +36,39 @@ class _DateSquareState extends State<DateSquare> {
         ? Colors.white
         : const Color(0xFF9D8B8B);
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        setState(() {
-          isHovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          isHovered = false;
-        });
-      },
-      child: GestureDetector(
-        onTap: () {
-          widget.onDateSelected(widget.date);
+    return Semantics(
+      label: 'Day ${widget.date}',
+      button: true,
+      selected: widget.isSelected,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) {
+          setState(() {
+            isHovered = true;
+          });
         },
-        child: Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              widget.date.toString(),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: textColor,
+        onExit: (_) {
+          setState(() {
+            isHovered = false;
+          });
+        },
+        child: GestureDetector(
+          onTap: () {
+            widget.onDateSelected(widget.date);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                widget.date.toString(),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: textColor,
+                ),
               ),
             ),
           ),
