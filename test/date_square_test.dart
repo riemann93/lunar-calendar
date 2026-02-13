@@ -9,6 +9,7 @@ Widget buildTestDateSquare({
   required int date,
   bool isSelected = false,
   bool isToday = false,
+  bool hasEvents = false,
   required ValueChanged<int> onDateSelected,
 }) {
   return MaterialApp(
@@ -20,6 +21,7 @@ Widget buildTestDateSquare({
           date: date,
           isSelected: isSelected,
           isToday: isToday,
+          hasEvents: hasEvents,
           onDateSelected: onDateSelected,
         ),
       ),
@@ -217,6 +219,111 @@ void main() {
       ));
 
       expect(find.bySemanticsLabel(RegExp(r'Day 7.*today')), findsOneWidget);
+
+      handle.dispose();
+    });
+
+    testWidgets('shows event dot when hasEvents is true', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        hasEvents: true,
+        onDateSelected: (_) {},
+      ));
+
+      // Find the dot container (4x4 circle)
+      final dotFinder = find.descendant(
+        of: find.byType(DateSquare),
+        matching: find.byWidgetPredicate((widget) {
+          if (widget is Container && widget.decoration is BoxDecoration) {
+            final dec = widget.decoration as BoxDecoration;
+            return dec.shape == BoxShape.circle;
+          }
+          return false;
+        }),
+      );
+      expect(dotFinder, findsOneWidget);
+    });
+
+    testWidgets('no event dot when hasEvents is false', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        onDateSelected: (_) {},
+      ));
+
+      final dotFinder = find.descendant(
+        of: find.byType(DateSquare),
+        matching: find.byWidgetPredicate((widget) {
+          if (widget is Container && widget.decoration is BoxDecoration) {
+            final dec = widget.decoration as BoxDecoration;
+            return dec.shape == BoxShape.circle;
+          }
+          return false;
+        }),
+      );
+      expect(dotFinder, findsNothing);
+    });
+
+    testWidgets('event dot is dusty rose when not selected', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        hasEvents: true,
+        onDateSelected: (_) {},
+      ));
+
+      final dot = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byWidgetPredicate((widget) {
+            if (widget is Container && widget.decoration is BoxDecoration) {
+              final dec = widget.decoration as BoxDecoration;
+              return dec.shape == BoxShape.circle;
+            }
+            return false;
+          }),
+        ),
+      );
+      final dec = dot.decoration as BoxDecoration;
+      expect(dec.color, const Color(0xFFB89090));
+    });
+
+    testWidgets('event dot is white when selected', (tester) async {
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 1,
+        isSelected: true,
+        hasEvents: true,
+        onDateSelected: (_) {},
+      ));
+
+      final dot = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byWidgetPredicate((widget) {
+            if (widget is Container && widget.decoration is BoxDecoration) {
+              final dec = widget.decoration as BoxDecoration;
+              return dec.shape == BoxShape.circle;
+            }
+            return false;
+          }),
+        ),
+      );
+      final dec = dot.decoration as BoxDecoration;
+      expect(dec.color, Colors.white);
+    });
+
+    testWidgets('semantics label includes has events when hasEvents is true',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(buildTestDateSquare(
+        date: 5,
+        hasEvents: true,
+        onDateSelected: (_) {},
+      ));
+
+      expect(
+        find.bySemanticsLabel(RegExp(r'Day 5.*has events')),
+        findsOneWidget,
+      );
 
       handle.dispose();
     });

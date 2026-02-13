@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'models/event.dart';
 import 'month_card.dart';
+import 'event_list_sheet.dart';
+import 'event_form_sheet.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,8 +42,74 @@ const List<String> monthNames = [
   'December',
 ];
 
-class CalendarHomePage extends StatelessWidget {
+class CalendarHomePage extends StatefulWidget {
   const CalendarHomePage({super.key});
+
+  @override
+  State<CalendarHomePage> createState() => _CalendarHomePageState();
+}
+
+class _CalendarHomePageState extends State<CalendarHomePage> {
+  // In-memory event storage. Key format: "monthIndex-day" (e.g., "6-14").
+  final Map<String, List<Event>> _events = {};
+
+  List<Event> _getEventsForDate(int monthIndex, int day) {
+    return _events['$monthIndex-$day'] ?? [];
+  }
+
+  Set<int> _getEventDaysForMonth(int monthIndex) {
+    final days = <int>{};
+    for (final key in _events.keys) {
+      if (key.startsWith('$monthIndex-') && _events[key]!.isNotEmpty) {
+        days.add(int.parse(key.split('-')[1]));
+      }
+    }
+    return days;
+  }
+
+  void _addEvent(int monthIndex, int day, Event event) {
+    setState(() {
+      final key = '$monthIndex-$day';
+      _events.putIfAbsent(key, () => []);
+      _events[key]!.add(event);
+    });
+  }
+
+  void _onDateTapped(int monthIndex, int day) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EventListSheet(
+        monthName: monthNames[monthIndex],
+        day: day,
+        events: _getEventsForDate(monthIndex, day),
+        onAddEvent: () {
+          Navigator.pop(context);
+          _showAddEventForm(monthIndex, day);
+        },
+      ),
+    );
+  }
+
+  void _showAddEventForm(int monthIndex, int day) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: EventFormSheet(
+          monthName: monthNames[monthIndex],
+          day: day,
+          onSave: (event) {
+            _addEvent(monthIndex, day, event);
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +177,10 @@ class CalendarHomePage extends StatelessWidget {
                   itemBuilder: (context, index) {
                     return MonthCard(
                       monthName: monthNames[index],
+                      monthIndex: index,
                       todayDay: index == todayMonthIndex ? todayDay : null,
+                      eventDays: _getEventDaysForMonth(index),
+                      onDateTapped: _onDateTapped,
                     );
                   },
                 ),

@@ -4,13 +4,25 @@ import 'package:lunar_calendar/date_square.dart';
 import 'package:lunar_calendar/month_card.dart';
 
 /// Helper to pump a MonthCard inside a constrained layout.
-Widget buildTestMonthCard(String monthName, {int? todayDay}) {
+Widget buildTestMonthCard(
+  String monthName, {
+  int monthIndex = 0,
+  int? todayDay,
+  Set<int> eventDays = const {},
+  void Function(int, int)? onDateTapped,
+}) {
   return MaterialApp(
     home: Scaffold(
       body: SizedBox(
         width: 300,
         height: 400,
-        child: MonthCard(monthName: monthName, todayDay: todayDay),
+        child: MonthCard(
+          monthName: monthName,
+          monthIndex: monthIndex,
+          todayDay: todayDay,
+          eventDays: eventDays,
+          onDateTapped: onDateTapped,
+        ),
       ),
     ),
   );
@@ -132,6 +144,49 @@ void main() {
       for (final sq in squares) {
         expect(sq.isToday, false);
       }
+    });
+
+    testWidgets('passes hasEvents to correct DateSquares from eventDays',
+        (tester) async {
+      await tester.pumpWidget(
+        buildTestMonthCard('January', eventDays: {5, 10}),
+      );
+
+      final ds5 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '5'),
+      );
+      final ds10 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '10'),
+      );
+      final ds6 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '6'),
+      );
+
+      expect(ds5.hasEvents, true);
+      expect(ds10.hasEvents, true);
+      expect(ds6.hasEvents, false);
+    });
+
+    testWidgets('calls onDateTapped when a date is tapped', (tester) async {
+      int? tappedMonth;
+      int? tappedDay;
+
+      await tester.pumpWidget(
+        buildTestMonthCard(
+          'Sol',
+          monthIndex: 6,
+          onDateTapped: (month, day) {
+            tappedMonth = month;
+            tappedDay = day;
+          },
+        ),
+      );
+
+      await tester.tap(find.text('14'));
+      await tester.pump();
+
+      expect(tappedMonth, 6);
+      expect(tappedDay, 14);
     });
   });
 }

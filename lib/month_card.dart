@@ -3,9 +3,19 @@ import 'date_square.dart';
 
 class MonthCard extends StatefulWidget {
   final String monthName;
+  final int monthIndex;
   final int? todayDay;
+  final Set<int> eventDays;
+  final void Function(int monthIndex, int day)? onDateTapped;
 
-  const MonthCard({super.key, required this.monthName, this.todayDay});
+  const MonthCard({
+    super.key,
+    required this.monthName,
+    this.monthIndex = 0,
+    this.todayDay,
+    this.eventDays = const {},
+    this.onDateTapped,
+  });
 
   @override
   State<MonthCard> createState() => _MonthCardState();
@@ -94,10 +104,12 @@ class _MonthCardState extends State<MonthCard> {
                     date: dateNumber,
                     isSelected: selectedDate == dateNumber,
                     isToday: widget.todayDay == dateNumber,
+                    hasEvents: widget.eventDays.contains(dateNumber),
                     onDateSelected: (date) {
                       setState(() {
                         selectedDate = selectedDate == date ? null : date;
                       });
+                      widget.onDateTapped?.call(widget.monthIndex, date);
                     },
                   );
                 },
