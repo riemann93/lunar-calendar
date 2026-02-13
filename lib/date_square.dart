@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class DateSquare extends StatefulWidget {
   final int date;
   final bool isSelected;
+  final bool isToday;
   final ValueChanged<int> onDateSelected;
 
   const DateSquare({
     super.key,
     required this.date,
     required this.isSelected,
+    this.isToday = false,
     required this.onDateSelected,
   });
 
@@ -37,7 +39,7 @@ class _DateSquareState extends State<DateSquare> {
         : const Color(0xFF9D8B8B);
 
     return Semantics(
-      label: 'Day ${widget.date}',
+      label: 'Day ${widget.date}${widget.isToday ? ', today' : ''}',
       button: true,
       selected: widget.isSelected,
       child: MouseRegion(
@@ -60,6 +62,9 @@ class _DateSquareState extends State<DateSquare> {
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(8),
+              border: widget.isToday
+                  ? Border.all(color: const Color(0xFFB89090), width: 2)
+                  : null,
             ),
             child: Center(
               child: Text(

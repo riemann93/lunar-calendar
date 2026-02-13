@@ -44,6 +44,15 @@ class CalendarHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Compute today's position in the 13-month lunar calendar.
+    // Each month is exactly 28 days, so day-of-year maps directly.
+    // Days beyond 364 (day 365/366) are clamped to December 28.
+    final now = DateTime.now();
+    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
+    final clampedDay = dayOfYear.clamp(1, 364);
+    final todayMonthIndex = (clampedDay - 1) ~/ 28;
+    final todayDay = (clampedDay - 1) % 28 + 1;
+
     return Scaffold(
       // Soft peachy-beige background color from design
       backgroundColor: const Color(0xFFE8D5D0),
@@ -64,9 +73,9 @@ class CalendarHomePage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '2024',
-                  style: TextStyle(
+                Text(
+                  '${now.year}',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w300,
                     color: Color(0xFF9D8B8B),
@@ -97,7 +106,10 @@ class CalendarHomePage extends StatelessWidget {
                   ),
                   itemCount: monthNames.length,
                   itemBuilder: (context, index) {
-                    return MonthCard(monthName: monthNames[index]);
+                    return MonthCard(
+                      monthName: monthNames[index],
+                      todayDay: index == todayMonthIndex ? todayDay : null,
+                    );
                   },
                 ),
               ],
