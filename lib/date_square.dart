@@ -4,6 +4,7 @@ class DateSquare extends StatefulWidget {
   final int date;
   final bool isSelected;
   final bool isToday;
+  final bool hasEvent;
   final ValueChanged<int> onDateSelected;
 
   const DateSquare({
@@ -11,6 +12,7 @@ class DateSquare extends StatefulWidget {
     required this.date,
     required this.isSelected,
     this.isToday = false,
+    this.hasEvent = false,
     required this.onDateSelected,
   });
 
@@ -66,15 +68,30 @@ class _DateSquareState extends State<DateSquare> {
                   ? Border.all(color: const Color(0xFFB89090), width: 2)
                   : null,
             ),
-            child: Center(
-              child: Text(
-                widget.date.toString(),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: textColor,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.date.toString(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: textColor,
+                  ),
                 ),
-              ),
+                if (widget.hasEvent)
+                  Container(
+                    width: 4,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 2),
+                    decoration: BoxDecoration(
+                      color: widget.isSelected
+                          ? Colors.white
+                          : const Color(0xFFB89090),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

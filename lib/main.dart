@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'models/calendar_mode.dart';
+import 'models/ifc_date.dart';
 import 'month_card.dart';
 
 void main() {
@@ -13,48 +15,49 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '13-Month Lunar Calendar',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'serif', // Matches the elegant serif font in design
-      ),
+      theme: ThemeData(useMaterial3: true, fontFamily: 'serif'),
       home: const CalendarHomePage(),
     );
   }
 }
 
-// List of 13 month names for the lunar calendar
-const List<String> monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'Sol',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+// Keep top-level alias for backward compatibility with existing tests
+const List<String> monthNames = lunarMonthNames;
 
-class CalendarHomePage extends StatelessWidget {
+class CalendarHomePage extends StatefulWidget {
   const CalendarHomePage({super.key});
 
   @override
+  State<CalendarHomePage> createState() => _CalendarHomePageState();
+}
+
+class _CalendarHomePageState extends State<CalendarHomePage> {
+  CalendarMode _mode = CalendarMode.lunar;
+
+  @override
   Widget build(BuildContext context) {
-    // Compute today's position in the 13-month lunar calendar.
-    // Each month is exactly 28 days, so day-of-year maps directly.
-    // Days beyond 364 (day 365/366) are clamped to December 28.
     final now = DateTime.now();
-    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
-    final clampedDay = dayOfYear.clamp(1, 364);
-    final todayMonthIndex = (clampedDay - 1) ~/ 28;
-    final todayDay = (clampedDay - 1) % 28 + 1;
+    final isLunar = _mode == CalendarMode.lunar;
+
+    // Determine month list, title, and today position based on mode
+    final months = isLunar ? lunarMonthNames : gregorianMonthNames;
+    final title = isLunar ? '13-Month Lunar Calendar' : 'Calendar';
+
+    // Today's position in the current mode
+    int? todayMonthIndex;
+    int? todayDay;
+    if (isLunar) {
+      final todayIfc = IfcDate.fromDateTime(now);
+      if (todayIfc.isRegularDay) {
+        todayMonthIndex = todayIfc.month;
+        todayDay = todayIfc.day;
+      }
+    } else {
+      todayMonthIndex = now.month - 1; // 0-indexed
+      todayDay = now.day;
+    }
 
     return Scaffold(
-      // Soft peachy-beige background color from design
       backgroundColor: const Color(0xFFE8D5D0),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -63,9 +66,9 @@ class CalendarHomePage extends StatelessWidget {
             child: Column(
               children: [
                 // Header section with title and year
-                const Text(
-                  '13-Month Lunar Calendar',
-                  style: TextStyle(
+                Text(
+                  title,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF7D6B6B),
@@ -83,7 +86,7 @@ class CalendarHomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Button row
+                // Navigation buttons (unchanged, visual only for now)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -92,24 +95,51 @@ class CalendarHomePage extends StatelessWidget {
                     _buildPillButton('Explore & Learn', isSelected: false),
                   ],
                 ),
+                const SizedBox(height: 16),
+
+                // Calendar mode toggle
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildModeButton('Lunar', CalendarMode.lunar),
+                    const SizedBox(width: 12),
+                    _buildModeButton('Standard', CalendarMode.gregorian),
+                  ],
+                ),
                 const SizedBox(height: 32),
 
-                // 2-column grid of month cards
+                // Month grid
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.85, // Adjust height ratio
+                    // Gregorian months can have up to 6 rows, need more height
+                    childAspectRatio: isLunar ? 0.85 : 0.72,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
-                  itemCount: monthNames.length,
+                  itemCount: months.length,
                   itemBuilder: (context, index) {
-                    return MonthCard(
-                      monthName: monthNames[index],
-                      todayDay: index == todayMonthIndex ? todayDay : null,
-                    );
+                    if (isLunar) {
+                      return MonthCard(
+                        monthName: months[index],
+                        daysInMonth: 28,
+                        startWeekday: 0,
+                        todayDay: index == todayMonthIndex ? todayDay : null,
+                      );
+                    } else {
+                      final gregMonth = index + 1;
+                      return MonthCard(
+                        monthName: months[index],
+                        daysInMonth: gregorianDaysInMonth(now.year, gregMonth),
+                        startWeekday: gregorianMonthStartWeekday(
+                          now.year,
+                          gregMonth,
+                        ),
+                        todayDay: index == todayMonthIndex ? todayDay : null,
+                      );
+                    }
                   },
                 ),
               ],
@@ -120,7 +150,39 @@ class CalendarHomePage extends StatelessWidget {
     );
   }
 
-  // Helper method to build the pill-shaped buttons
+  Widget _buildModeButton(String label, CalendarMode mode) {
+    final isActive = _mode == mode;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _mode = mode;
+        });
+      },
+      child: Semantics(
+        label: '$label calendar',
+        button: true,
+        selected: isActive,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFB89090) : const Color(0xFFF5EDE8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFB89090), width: 1),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isActive ? Colors.white : const Color(0xFF7D6B6B),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build the pill-shaped navigation buttons
   Widget _buildPillButton(String label, {required bool isSelected}) {
     return Semantics(
       label: label,
@@ -129,9 +191,7 @@ class CalendarHomePage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFB89090) // Dusty rose when selected
-              : const Color(0xFFC9ADAD), // Lighter rose when not selected
+          color: isSelected ? const Color(0xFFB89090) : const Color(0xFFC9ADAD),
           borderRadius: BorderRadius.circular(25),
         ),
         child: Text(

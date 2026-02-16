@@ -4,20 +4,32 @@ import 'package:lunar_calendar/date_square.dart';
 import 'package:lunar_calendar/month_card.dart';
 
 /// Helper to pump a MonthCard inside a constrained layout.
-Widget buildTestMonthCard(String monthName, {int? todayDay}) {
+Widget buildTestMonthCard(
+  String monthName, {
+  int daysInMonth = 28,
+  int startWeekday = 0,
+  int? todayDay,
+  bool Function(int)? hasEventOnDay,
+}) {
   return MaterialApp(
     home: Scaffold(
       body: SizedBox(
         width: 300,
-        height: 400,
-        child: MonthCard(monthName: monthName, todayDay: todayDay),
+        height: 500,
+        child: MonthCard(
+          monthName: monthName,
+          daysInMonth: daysInMonth,
+          startWeekday: startWeekday,
+          todayDay: todayDay,
+          hasEventOnDay: hasEventOnDay,
+        ),
       ),
     ),
   );
 }
 
 void main() {
-  group('MonthCard', () {
+  group('MonthCard - lunar mode (28 days, no offset)', () {
     testWidgets('displays the month name', (tester) async {
       await tester.pumpWidget(buildTestMonthCard('Sol'));
 
@@ -95,7 +107,9 @@ void main() {
       await tester.tap(find.text('10'));
       await tester.pump();
       expect(
-        tester.widget<DateSquare>(find.widgetWithText(DateSquare, '10')).isSelected,
+        tester
+            .widget<DateSquare>(find.widgetWithText(DateSquare, '10'))
+            .isSelected,
         true,
       );
 
@@ -103,35 +117,95 @@ void main() {
       await tester.tap(find.text('10'));
       await tester.pump();
       expect(
-        tester.widget<DateSquare>(find.widgetWithText(DateSquare, '10')).isSelected,
+        tester
+            .widget<DateSquare>(find.widgetWithText(DateSquare, '10'))
+            .isSelected,
         false,
       );
     });
 
-    testWidgets('passes isToday to correct DateSquare when todayDay is provided',
-        (tester) async {
-      await tester.pumpWidget(buildTestMonthCard('January', todayDay: 14));
+    testWidgets(
+      'passes isToday to correct DateSquare when todayDay is provided',
+      (tester) async {
+        await tester.pumpWidget(buildTestMonthCard('January', todayDay: 14));
 
-      final ds14 = tester.widget<DateSquare>(
-        find.widgetWithText(DateSquare, '14'),
-      );
-      expect(ds14.isToday, true);
+        final ds14 = tester.widget<DateSquare>(
+          find.widgetWithText(DateSquare, '14'),
+        );
+        expect(ds14.isToday, true);
 
-      // Other dates should not be today
-      final ds15 = tester.widget<DateSquare>(
-        find.widgetWithText(DateSquare, '15'),
-      );
-      expect(ds15.isToday, false);
-    });
+        // Other dates should not be today
+        final ds15 = tester.widget<DateSquare>(
+          find.widgetWithText(DateSquare, '15'),
+        );
+        expect(ds15.isToday, false);
+      },
+    );
 
-    testWidgets('no DateSquare has isToday when todayDay is null',
-        (tester) async {
+    testWidgets('no DateSquare has isToday when todayDay is null', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestMonthCard('January'));
 
       final squares = tester.widgetList<DateSquare>(find.byType(DateSquare));
       for (final sq in squares) {
         expect(sq.isToday, false);
       }
+    });
+  });
+
+  group('MonthCard - Gregorian mode (variable days and offset)', () {
+    testWidgets('renders 31 DateSquares for a 31-day month', (tester) async {
+      await tester.pumpWidget(
+        buildTestMonthCard('March', daysInMonth: 31, startWeekday: 0),
+      );
+
+      expect(find.byType(DateSquare), findsNWidgets(31));
+    });
+
+    testWidgets('renders 30 DateSquares for a 30-day month', (tester) async {
+      await tester.pumpWidget(
+        buildTestMonthCard('April', daysInMonth: 30, startWeekday: 0),
+      );
+
+      expect(find.byType(DateSquare), findsNWidgets(30));
+    });
+
+    testWidgets('renders correct number with weekday offset', (tester) async {
+      // A month starting on Wednesday (offset 3) with 31 days
+      await tester.pumpWidget(
+        buildTestMonthCard('January', daysInMonth: 31, startWeekday: 3),
+      );
+
+      // Should still have 31 DateSquare widgets (offset cells are SizedBox)
+      expect(find.byType(DateSquare), findsNWidgets(31));
+    });
+
+    testWidgets('offset cells are empty SizedBox widgets', (tester) async {
+      // Month starts on Saturday (offset 6)
+      await tester.pumpWidget(
+        buildTestMonthCard('August', daysInMonth: 31, startWeekday: 6),
+      );
+
+      // 31 date squares + 6 empty SizedBox cells in the grid
+      // The grid has 37 items total but only 31 are DateSquare
+      expect(find.byType(DateSquare), findsNWidgets(31));
+    });
+
+    testWidgets('hasEventOnDay callback is respected', (tester) async {
+      await tester.pumpWidget(
+        buildTestMonthCard('January', hasEventOnDay: (day) => day == 15),
+      );
+
+      final ds15 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '15'),
+      );
+      expect(ds15.hasEvent, true);
+
+      final ds16 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '16'),
+      );
+      expect(ds16.hasEvent, false);
     });
   });
 }

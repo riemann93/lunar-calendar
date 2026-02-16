@@ -3,9 +3,19 @@ import 'date_square.dart';
 
 class MonthCard extends StatefulWidget {
   final String monthName;
+  final int daysInMonth;
+  final int startWeekday; // 0=Sun, 6=Sat — offset for first day of month
   final int? todayDay;
+  final bool Function(int day)? hasEventOnDay;
 
-  const MonthCard({super.key, required this.monthName, this.todayDay});
+  const MonthCard({
+    super.key,
+    required this.monthName,
+    this.daysInMonth = 28,
+    this.startWeekday = 0,
+    this.todayDay,
+    this.hasEventOnDay,
+  });
 
   @override
   State<MonthCard> createState() => _MonthCardState();
@@ -27,6 +37,8 @@ class _MonthCardState extends State<MonthCard> {
 
   @override
   Widget build(BuildContext context) {
+    final totalCells = widget.startWeekday + widget.daysInMonth;
+
     return Semantics(
       label: widget.monthName,
       container: true,
@@ -77,7 +89,7 @@ class _MonthCardState extends State<MonthCard> {
             ),
             const SizedBox(height: 12),
 
-            // Date grid - 28 dates in 4 rows of 7
+            // Date grid
             Expanded(
               child: GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
@@ -87,13 +99,18 @@ class _MonthCardState extends State<MonthCard> {
                   mainAxisSpacing: 4,
                   childAspectRatio: 1,
                 ),
-                itemCount: 28,
+                itemCount: totalCells,
                 itemBuilder: (context, index) {
-                  int dateNumber = index + 1;
+                  // Empty cells for weekday offset
+                  if (index < widget.startWeekday) {
+                    return const SizedBox.shrink();
+                  }
+                  final dateNumber = index - widget.startWeekday + 1;
                   return DateSquare(
                     date: dateNumber,
                     isSelected: selectedDate == dateNumber,
                     isToday: widget.todayDay == dateNumber,
+                    hasEvent: widget.hasEventOnDay?.call(dateNumber) ?? false,
                     onDateSelected: (date) {
                       setState(() {
                         selectedDate = selectedDate == date ? null : date;
