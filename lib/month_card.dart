@@ -60,6 +60,7 @@ class _MonthCardState extends State<MonthCard> {
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Month name
@@ -93,37 +94,36 @@ class _MonthCardState extends State<MonthCard> {
             ),
             const SizedBox(height: 12),
 
-            // Date grid
-            Expanded(
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 4,
-                  mainAxisSpacing: 4,
-                  childAspectRatio: 1,
-                ),
-                itemCount: totalCells,
-                itemBuilder: (context, index) {
-                  // Empty cells for weekday offset
-                  if (index < widget.startWeekday) {
-                    return const SizedBox.shrink();
-                  }
-                  final dateNumber = index - widget.startWeekday + 1;
-                  return DateSquare(
-                    date: dateNumber,
-                    isSelected: selectedDate == dateNumber,
-                    isToday: widget.todayDay == dateNumber,
-                    hasEvent: widget.hasEventOnDay?.call(dateNumber) ?? false,
-                    onDateSelected: (date) {
-                      setState(() {
-                        selectedDate = selectedDate == date ? null : date;
-                      });
-                      widget.onDateTapped?.call(widget.monthIndex, date);
-                    },
-                  );
-                },
+            // Date grid — shrinkWrap so the card fits its content with no bottom gap
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4,
+                childAspectRatio: 1,
               ),
+              itemCount: totalCells,
+              itemBuilder: (context, index) {
+                // Empty cells for weekday offset
+                if (index < widget.startWeekday) {
+                  return const SizedBox.shrink();
+                }
+                final dateNumber = index - widget.startWeekday + 1;
+                return DateSquare(
+                  date: dateNumber,
+                  isSelected: selectedDate == dateNumber,
+                  isToday: widget.todayDay == dateNumber,
+                  hasEvent: widget.hasEventOnDay?.call(dateNumber) ?? false,
+                  onDateSelected: (date) {
+                    setState(() {
+                      selectedDate = selectedDate == date ? null : date;
+                    });
+                    widget.onDateTapped?.call(widget.monthIndex, date);
+                  },
+                );
+              },
             ),
           ],
         ),
