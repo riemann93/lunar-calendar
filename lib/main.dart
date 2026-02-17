@@ -174,52 +174,84 @@ class _CalendarHomePageState extends State<CalendarHomePage> {
                 ),
                 const SizedBox(height: 32),
 
-                // Month grid
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    // Gregorian months can have up to 6 rows, need more height
-                    childAspectRatio: isLunar ? 0.85 : 0.72,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: months.length,
-                  itemBuilder: (context, index) {
-                    if (isLunar) {
-                      return MonthCard(
-                        monthName: months[index],
-                        daysInMonth: 28,
-                        startWeekday: 0,
-                        monthIndex: index,
-                        todayDay: index == todayMonthIndex ? todayDay : null,
-                        hasEventOnDay: (day) => _hasEventOnDay(index, day),
-                        onDateTapped: _onDateTapped,
-                      );
-                    } else {
-                      final gregMonth = index + 1;
-                      return MonthCard(
-                        monthName: months[index],
-                        daysInMonth: gregorianDaysInMonth(now.year, gregMonth),
-                        startWeekday: gregorianMonthStartWeekday(
-                          now.year,
-                          gregMonth,
-                        ),
-                        monthIndex: index,
-                        todayDay: index == todayMonthIndex ? todayDay : null,
-                        hasEventOnDay: (day) => _hasEventOnDay(index, day),
-                        onDateTapped: _onDateTapped,
-                      );
-                    }
-                  },
-                ),
+                // Month grid — built as paired rows so cards can size to content
+                ..._buildMonthRows(months, now, isLunar, todayMonthIndex, todayDay),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Build month cards in rows of 2, letting each card size to its content.
+  /// This eliminates the bottom gap caused by fixed aspect ratios and avoids
+  /// the expensive shrinkWrap GridView rebuild on mode switch.
+  List<Widget> _buildMonthRows(
+    List<String> months,
+    DateTime now,
+    bool isLunar,
+    int? todayMonthIndex,
+    int? todayDay,
+  ) {
+    final rows = <Widget>[];
+    for (int i = 0; i < months.length; i += 2) {
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(bottom: i + 2 < months.length ? 16 : 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildMonthCard(i, months, now, isLunar, todayMonthIndex, todayDay),
+              ),
+              const SizedBox(width: 16),
+              if (i + 1 < months.length)
+                Expanded(
+                  child: _buildMonthCard(i + 1, months, now, isLunar, todayMonthIndex, todayDay),
+                )
+              else
+                const Expanded(child: SizedBox.shrink()),
+            ],
+          ),
+        ),
+      );
+    }
+    return rows;
+  }
+
+  Widget _buildMonthCard(
+    int index,
+    List<String> months,
+    DateTime now,
+    bool isLunar,
+    int? todayMonthIndex,
+    int? todayDay,
+  ) {
+    if (isLunar) {
+      return MonthCard(
+        key: ValueKey('lunar-$index'),
+        monthName: months[index],
+        daysInMonth: 28,
+        startWeekday: 0,
+        monthIndex: index,
+        todayDay: index == todayMonthIndex ? todayDay : null,
+        hasEventOnDay: (day) => _hasEventOnDay(index, day),
+        onDateTapped: _onDateTapped,
+      );
+    } else {
+      final gregMonth = index + 1;
+      return MonthCard(
+        key: ValueKey('greg-$index'),
+        monthName: months[index],
+        daysInMonth: gregorianDaysInMonth(now.year, gregMonth),
+        startWeekday: gregorianMonthStartWeekday(now.year, gregMonth),
+        monthIndex: index,
+        todayDay: index == todayMonthIndex ? todayDay : null,
+        hasEventOnDay: (day) => _hasEventOnDay(index, day),
+        onDateTapped: _onDateTapped,
+      );
+    }
   }
 
   Widget _buildModeButton(String label, CalendarMode mode) {
