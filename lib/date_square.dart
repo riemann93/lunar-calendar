@@ -4,7 +4,7 @@ class DateSquare extends StatefulWidget {
   final int date;
   final bool isSelected;
   final bool isToday;
-  final bool hasEvents;
+  final bool hasEvent;
   final ValueChanged<int> onDateSelected;
 
   const DateSquare({
@@ -12,7 +12,7 @@ class DateSquare extends StatefulWidget {
     required this.date,
     required this.isSelected,
     this.isToday = false,
-    this.hasEvents = false,
+    this.hasEvent = false,
     required this.onDateSelected,
   });
 
@@ -41,7 +41,7 @@ class _DateSquareState extends State<DateSquare> {
         : const Color(0xFF9D8B8B);
 
     return Semantics(
-      label: 'Day ${widget.date}${widget.isToday ? ', today' : ''}${widget.hasEvents ? ', has events' : ''}',
+      label: 'Day ${widget.date}${widget.isToday ? ', today' : ''}${widget.hasEvent ? ', has events' : ''}',
       button: true,
       selected: widget.isSelected,
       child: MouseRegion(
@@ -79,7 +79,7 @@ class _DateSquareState extends State<DateSquare> {
                     color: textColor,
                   ),
                 ),
-                if (widget.hasEvents)
+                if (widget.hasEvent)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
                     width: 4,

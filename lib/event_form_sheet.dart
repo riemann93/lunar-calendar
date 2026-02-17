@@ -5,12 +5,14 @@ import 'models/event.dart';
 class EventFormSheet extends StatefulWidget {
   final String monthName;
   final int day;
+  final DateTime date; // Gregorian date for the event
   final ValueChanged<Event> onSave;
 
   const EventFormSheet({
     super.key,
     required this.monthName,
     required this.day,
+    required this.date,
     required this.onSave,
   });
 
@@ -46,6 +48,7 @@ class _EventFormSheetState extends State<EventFormSheet> {
     final event = Event(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
+      date: widget.date,
       description: _descriptionController.text.trim(),
     );
     widget.onSave(event);

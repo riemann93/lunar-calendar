@@ -59,8 +59,8 @@ void main() {
     });
   });
 
-  group('CalendarHomePage', () {
-    testWidgets('renders the calendar title', (tester) async {
+  group('CalendarHomePage - lunar mode (default)', () {
+    testWidgets('renders the lunar calendar title by default', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
       expect(find.text('13-Month Lunar Calendar'), findsOneWidget);
@@ -85,13 +85,20 @@ void main() {
       expect(find.text('Explore & Learn'), findsOneWidget);
     });
 
-    testWidgets('renders 13 MonthCard widgets', (tester) async {
+    testWidgets('renders mode toggle buttons', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      expect(find.text('Lunar'), findsOneWidget);
+      expect(find.text('Standard'), findsOneWidget);
+    });
+
+    testWidgets('renders 13 MonthCard widgets in lunar mode', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
       expect(find.byType(MonthCard), findsNWidgets(13));
     });
 
-    testWidgets('renders all month names', (tester) async {
+    testWidgets('renders all lunar month names', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
       for (final name in monthNames) {
@@ -106,16 +113,63 @@ void main() {
       expect(scaffold.backgroundColor, const Color(0xFFE8D5D0));
     });
 
-    testWidgets('exactly one MonthCard receives a todayDay value',
-        (tester) async {
+    testWidgets('at most one MonthCard receives a todayDay value', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
       final cards = tester.widgetList<MonthCard>(find.byType(MonthCard));
-      final cardsWithToday =
-          cards.where((card) => card.todayDay != null).toList();
-      expect(cardsWithToday.length, 1);
-      // The todayDay value should be between 1 and 28
-      expect(cardsWithToday.first.todayDay, inInclusiveRange(1, 28));
+      final cardsWithToday = cards
+          .where((card) => card.todayDay != null)
+          .toList();
+      // 0 on Year Day / Leap Day, 1 on regular days
+      expect(cardsWithToday.length, lessThanOrEqualTo(1));
+      if (cardsWithToday.isNotEmpty) {
+        expect(cardsWithToday.first.todayDay, inInclusiveRange(1, 28));
+      }
+    });
+  });
+
+  group('CalendarHomePage - mode toggle', () {
+    testWidgets('tapping Standard switches to 12-month Gregorian view', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      // Default: 13 months
+      expect(find.byType(MonthCard), findsNWidgets(13));
+
+      // Tap "Standard"
+      await tester.tap(find.text('Standard'));
+      await tester.pump();
+
+      // Should now show 12 months
+      expect(find.byType(MonthCard), findsNWidgets(12));
+      expect(find.text('Calendar'), findsOneWidget);
+    });
+
+    testWidgets('tapping Lunar switches back to 13-month view', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      // Switch to Gregorian
+      await tester.tap(find.text('Standard'));
+      await tester.pump();
+      expect(find.byType(MonthCard), findsNWidgets(12));
+
+      // Switch back to Lunar
+      await tester.tap(find.text('Lunar'));
+      await tester.pump();
+      expect(find.byType(MonthCard), findsNWidgets(13));
+      expect(find.text('13-Month Lunar Calendar'), findsOneWidget);
+    });
+
+    testWidgets('Gregorian mode does not show Sol month', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      await tester.tap(find.text('Standard'));
+      await tester.pump();
+
+      expect(find.text('Sol'), findsNothing);
     });
 
     testWidgets('each MonthCard receives the correct monthIndex',
@@ -128,13 +182,13 @@ void main() {
       }
     });
 
-    testWidgets('MonthCards have empty eventDays by default',
+    testWidgets('MonthCards receive hasEventOnDay callback',
         (tester) async {
       await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
 
       final cards = tester.widgetList<MonthCard>(find.byType(MonthCard));
       for (final card in cards) {
-        expect(card.eventDays, isEmpty);
+        expect(card.hasEventOnDay, isNotNull);
       }
     });
 

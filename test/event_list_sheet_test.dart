@@ -42,8 +42,8 @@ void main() {
     testWidgets('displays event titles', (tester) async {
       await tester.pumpWidget(buildTestEventListSheet(
         events: [
-          const Event(id: '1', title: 'Meeting'),
-          const Event(id: '2', title: 'Dinner'),
+          Event(id: '1', title: 'Meeting', date: DateTime(2026, 1, 1)),
+          Event(id: '2', title: 'Dinner', date: DateTime(2026, 1, 1)),
         ],
       ));
 
@@ -54,7 +54,7 @@ void main() {
     testWidgets('displays event descriptions', (tester) async {
       await tester.pumpWidget(buildTestEventListSheet(
         events: [
-          const Event(id: '1', title: 'Meeting', description: 'Team sync'),
+          Event(id: '1', title: 'Meeting', date: DateTime(2026, 1, 1), description: 'Team sync'),
         ],
       ));
 
@@ -64,7 +64,7 @@ void main() {
     testWidgets('hides description when empty', (tester) async {
       await tester.pumpWidget(buildTestEventListSheet(
         events: [
-          const Event(id: '1', title: 'Meeting'),
+          Event(id: '1', title: 'Meeting', date: DateTime(2026, 1, 1)),
         ],
       ));
 

@@ -7,6 +7,7 @@ import 'package:lunar_calendar/models/event.dart';
 Widget buildTestEventFormSheet({
   String monthName = 'Sol',
   int day = 14,
+  DateTime? date,
   ValueChanged<Event>? onSave,
 }) {
   return MaterialApp(
@@ -14,6 +15,7 @@ Widget buildTestEventFormSheet({
       body: EventFormSheet(
         monthName: monthName,
         day: day,
+        date: date ?? DateTime(2026, 7, 1),
         onSave: onSave ?? (_) {},
       ),
     ),
