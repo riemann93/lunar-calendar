@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lunar_calendar/event_list_sheet.dart';
 import 'package:lunar_calendar/main.dart';
 import 'package:lunar_calendar/month_card.dart';
 
@@ -169,6 +170,37 @@ void main() {
       await tester.pump();
 
       expect(find.text('Sol'), findsNothing);
+    });
+
+    testWidgets('each MonthCard receives the correct monthIndex',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      final cards = tester.widgetList<MonthCard>(find.byType(MonthCard)).toList();
+      for (int i = 0; i < cards.length; i++) {
+        expect(cards[i].monthIndex, i);
+      }
+    });
+
+    testWidgets('MonthCards receive hasEventOnDay callback',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      final cards = tester.widgetList<MonthCard>(find.byType(MonthCard));
+      for (final card in cards) {
+        expect(card.hasEventOnDay, isNotNull);
+      }
+    });
+
+    testWidgets('tapping a date shows the event list sheet', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CalendarHomePage()));
+
+      // Tap the first date "1" in the first MonthCard
+      await tester.tap(find.text('1').first);
+      await tester.pumpAndSettle();
+
+      // EventListSheet should now be visible in the modal
+      expect(find.byType(EventListSheet), findsOneWidget);
     });
   });
 }

@@ -8,8 +8,10 @@ Widget buildTestMonthCard(
   String monthName, {
   int daysInMonth = 28,
   int startWeekday = 0,
+  int monthIndex = 0,
   int? todayDay,
   bool Function(int)? hasEventOnDay,
+  void Function(int, int)? onDateTapped,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -20,8 +22,10 @@ Widget buildTestMonthCard(
           monthName: monthName,
           daysInMonth: daysInMonth,
           startWeekday: startWeekday,
+          monthIndex: monthIndex,
           todayDay: todayDay,
           hasEventOnDay: hasEventOnDay,
+          onDateTapped: onDateTapped,
         ),
       ),
     ),
@@ -152,6 +156,53 @@ void main() {
         expect(sq.isToday, false);
       }
     });
+
+    testWidgets('passes hasEvent to correct DateSquares via hasEventOnDay', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestMonthCard(
+          'January',
+          hasEventOnDay: (day) => day == 5 || day == 10,
+        ),
+      );
+
+      final ds5 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '5'),
+      );
+      final ds10 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '10'),
+      );
+      final ds6 = tester.widget<DateSquare>(
+        find.widgetWithText(DateSquare, '6'),
+      );
+
+      expect(ds5.hasEvent, true);
+      expect(ds10.hasEvent, true);
+      expect(ds6.hasEvent, false);
+    });
+
+    testWidgets('calls onDateTapped when a date is tapped', (tester) async {
+      int? tappedMonth;
+      int? tappedDay;
+
+      await tester.pumpWidget(
+        buildTestMonthCard(
+          'Sol',
+          monthIndex: 6,
+          onDateTapped: (month, day) {
+            tappedMonth = month;
+            tappedDay = day;
+          },
+        ),
+      );
+
+      await tester.tap(find.text('14'));
+      await tester.pump();
+
+      expect(tappedMonth, 6);
+      expect(tappedDay, 14);
+    });
   });
 
   group('MonthCard - Gregorian mode (variable days and offset)', () {
@@ -192,9 +243,15 @@ void main() {
       expect(find.byType(DateSquare), findsNWidgets(31));
     });
 
-    testWidgets('hasEventOnDay callback is respected', (tester) async {
+    testWidgets('hasEventOnDay callback is respected in Gregorian mode', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        buildTestMonthCard('January', hasEventOnDay: (day) => day == 15),
+        buildTestMonthCard(
+          'January',
+          daysInMonth: 31,
+          hasEventOnDay: (day) => day == 15,
+        ),
       );
 
       final ds15 = tester.widget<DateSquare>(

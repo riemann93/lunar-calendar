@@ -15,6 +15,25 @@ void main() {
       final b = Event(id: '2', title: 'A', date: DateTime(2026, 2, 5));
       expect(a == b, false);
     });
+
+    test('description defaults to empty string', () {
+      final event = Event(
+        id: '123',
+        title: 'Test Event',
+        date: DateTime(2026, 1, 1),
+      );
+      expect(event.description, '');
+    });
+
+    test('description is settable', () {
+      final event = Event(
+        id: '123',
+        title: 'Test Event',
+        date: DateTime(2026, 1, 1),
+        description: 'Some details',
+      );
+      expect(event.description, 'Some details');
+    });
   });
 
   group('EventStore', () {

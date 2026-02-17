@@ -251,5 +251,69 @@ void main() {
       );
       expect(dotFinder, findsNothing);
     });
+
+    testWidgets('event dot is dusty rose when not selected', (tester) async {
+      await tester.pumpWidget(
+        buildTestDateSquare(date: 1, hasEvent: true, onDateSelected: (_) {}),
+      );
+
+      final dot = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byWidgetPredicate((widget) {
+            if (widget is Container && widget.decoration is BoxDecoration) {
+              final dec = widget.decoration as BoxDecoration;
+              return dec.shape == BoxShape.circle;
+            }
+            return false;
+          }),
+        ),
+      );
+      final dec = dot.decoration as BoxDecoration;
+      expect(dec.color, const Color(0xFFB89090));
+    });
+
+    testWidgets('event dot is white when selected', (tester) async {
+      await tester.pumpWidget(
+        buildTestDateSquare(
+          date: 1,
+          isSelected: true,
+          hasEvent: true,
+          onDateSelected: (_) {},
+        ),
+      );
+
+      final dot = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(DateSquare),
+          matching: find.byWidgetPredicate((widget) {
+            if (widget is Container && widget.decoration is BoxDecoration) {
+              final dec = widget.decoration as BoxDecoration;
+              return dec.shape == BoxShape.circle;
+            }
+            return false;
+          }),
+        ),
+      );
+      final dec = dot.decoration as BoxDecoration;
+      expect(dec.color, Colors.white);
+    });
+
+    testWidgets('semantics label includes has events when hasEvent is true', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        buildTestDateSquare(date: 5, hasEvent: true, onDateSelected: (_) {}),
+      );
+
+      expect(
+        find.bySemanticsLabel(RegExp(r'Day 5.*has events')),
+        findsOneWidget,
+      );
+
+      handle.dispose();
+    });
   });
 }

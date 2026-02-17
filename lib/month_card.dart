@@ -5,16 +5,20 @@ class MonthCard extends StatefulWidget {
   final String monthName;
   final int daysInMonth;
   final int startWeekday; // 0=Sun, 6=Sat — offset for first day of month
+  final int monthIndex;
   final int? todayDay;
   final bool Function(int day)? hasEventOnDay;
+  final void Function(int monthIndex, int day)? onDateTapped;
 
   const MonthCard({
     super.key,
     required this.monthName,
     this.daysInMonth = 28,
     this.startWeekday = 0,
+    this.monthIndex = 0,
     this.todayDay,
     this.hasEventOnDay,
+    this.onDateTapped,
   });
 
   @override
@@ -115,6 +119,7 @@ class _MonthCardState extends State<MonthCard> {
                       setState(() {
                         selectedDate = selectedDate == date ? null : date;
                       });
+                      widget.onDateTapped?.call(widget.monthIndex, date);
                     },
                   );
                 },

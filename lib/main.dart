@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'models/calendar_mode.dart';
+import 'models/event.dart';
 import 'models/ifc_date.dart';
 import 'month_card.dart';
+import 'event_list_sheet.dart';
+import 'event_form_sheet.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +36,69 @@ class CalendarHomePage extends StatefulWidget {
 
 class _CalendarHomePageState extends State<CalendarHomePage> {
   CalendarMode _mode = CalendarMode.lunar;
+  final EventStore _eventStore = EventStore();
+
+  /// Convert a month index + day to a Gregorian DateTime based on current mode.
+  DateTime _toGregorianDate(int monthIndex, int day) {
+    final year = DateTime.now().year;
+    if (_mode == CalendarMode.lunar) {
+      // IFC month/day → Gregorian
+      final ifcDate = IfcDate(year: year, month: monthIndex, day: day);
+      return ifcDate.toDateTime();
+    } else {
+      // Gregorian month (0-indexed) + day → DateTime
+      return DateTime(year, monthIndex + 1, day);
+    }
+  }
+
+  /// Check if a given day in a month has events (for dot indicator).
+  bool _hasEventOnDay(int monthIndex, int day) {
+    final gregDate = _toGregorianDate(monthIndex, day);
+    return _eventStore.hasEvents(gregDate);
+  }
+
+  void _onDateTapped(int monthIndex, int day) {
+    final gregDate = _toGregorianDate(monthIndex, day);
+    final months = _mode == CalendarMode.lunar ? lunarMonthNames : gregorianMonthNames;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EventListSheet(
+        monthName: months[monthIndex],
+        day: day,
+        events: _eventStore.forDate(gregDate),
+        onAddEvent: () {
+          Navigator.pop(context);
+          _showAddEventForm(monthIndex, day);
+        },
+      ),
+    );
+  }
+
+  void _showAddEventForm(int monthIndex, int day) {
+    final months = _mode == CalendarMode.lunar ? lunarMonthNames : gregorianMonthNames;
+    final gregDate = _toGregorianDate(monthIndex, day);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: EventFormSheet(
+          monthName: months[monthIndex],
+          day: day,
+          date: gregDate,
+          onSave: (event) {
+            setState(() {
+              _eventStore.add(event);
+            });
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +192,10 @@ class _CalendarHomePageState extends State<CalendarHomePage> {
                         monthName: months[index],
                         daysInMonth: 28,
                         startWeekday: 0,
+                        monthIndex: index,
                         todayDay: index == todayMonthIndex ? todayDay : null,
+                        hasEventOnDay: (day) => _hasEventOnDay(index, day),
+                        onDateTapped: _onDateTapped,
                       );
                     } else {
                       final gregMonth = index + 1;
@@ -137,7 +206,10 @@ class _CalendarHomePageState extends State<CalendarHomePage> {
                           now.year,
                           gregMonth,
                         ),
+                        monthIndex: index,
                         todayDay: index == todayMonthIndex ? todayDay : null,
+                        hasEventOnDay: (day) => _hasEventOnDay(index, day),
+                        onDateTapped: _onDateTapped,
                       );
                     }
                   },

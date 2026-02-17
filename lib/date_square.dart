@@ -41,7 +41,7 @@ class _DateSquareState extends State<DateSquare> {
         : const Color(0xFF9D8B8B);
 
     return Semantics(
-      label: 'Day ${widget.date}${widget.isToday ? ', today' : ''}',
+      label: 'Day ${widget.date}${widget.isToday ? ', today' : ''}${widget.hasEvent ? ', has events' : ''}',
       button: true,
       selected: widget.isSelected,
       child: MouseRegion(
@@ -81,10 +81,11 @@ class _DateSquareState extends State<DateSquare> {
                 ),
                 if (widget.hasEvent)
                   Container(
+                    margin: const EdgeInsets.only(top: 2),
                     width: 4,
                     height: 4,
-                    margin: const EdgeInsets.only(top: 2),
                     decoration: BoxDecoration(
+                      // White dot on selected bg, dusty rose on light bg
                       color: widget.isSelected
                           ? Colors.white
                           : const Color(0xFFB89090),

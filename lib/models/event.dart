@@ -2,18 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'ifc_date.dart';
 
 /// A calendar event, stored against a Gregorian date (source of truth).
+/// Events are identified by a unique [id] for editing/deletion.
 @immutable
 class Event {
   final String id;
   final String title;
   final DateTime date;
-  final String? description;
+  final String description;
 
   const Event({
     required this.id,
     required this.title,
     required this.date,
-    this.description,
+    this.description = '',
   });
 
   @override
@@ -27,7 +28,8 @@ class Event {
 class EventStore {
   final Map<String, List<Event>> _events = {};
 
-  static String _key(DateTime date) => '${date.year}-${date.month}-${date.day}';
+  static String _key(DateTime date) =>
+      '${date.year}-${date.month}-${date.day}';
 
   void add(Event event) {
     final key = _key(event.date);
